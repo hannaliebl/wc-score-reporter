@@ -1,5 +1,11 @@
 var http = require('http');
 var url = require('url');
+var fs = require('fs');
+var interpolate = require('./interpolator');
+
+var headerPartial = '<html><head><title>World Cup Score Reporter</title><link href="http://fonts.googleapis.com/css?family=Oxygen:400,300,700" rel="stylesheet" type="text/css"><link rel="stylesheet" type="text/css" href="main.css"></head><body><header><nav><ul><li><a href="./">Home</a></li><li><a href="./results">Detailed Results</a></li></ul></nav><h1>World Cup Score Reporter</h1></header>';
+var homePartial = '<div class="container"><h2>Team Summaries:</h2></div>';
+var footerPartial = '<footer>Based off of Portland Code School\'s To-Do app example</footer></body>';
 
 var teams = [
     { team: "Germany",
@@ -67,6 +73,16 @@ var server = http.createServer(function (req, res) {
     var pathRequested = url.parse(req.url, true).pathname;
     var queryParam = url.parse(req.url, true).query;
 
+    if (pathRequested === '/main.css') {
+      if (req.method === 'GET') {
+        fs.readFile('main.css', function(err, data) {
+          if (err) throw err;
+          res.writeHead({'Content-Type': 'text/css'});
+          res.end(data);
+        });
+      }
+    }
+
     if (pathRequested === '/results') {
       if (req.method === 'GET') {
         var totalTeamResults = [];
@@ -76,7 +92,7 @@ var server = http.createServer(function (req, res) {
             totalTeamResults.push(teams[i].matches[j].score.toString()+' vs '+teams[i].matches[j].opponent.toString()+' on '+teams[i].matches[j].date.toString());
           }
         }
-        var responseBody = totalTeamResults.join('\n');
+        var responseBody = headerPartial + totalTeamResults.join('\n') + footerPartial;
         res.writeHead({'Content-Type': 'text/html'});
         res.end(responseBody);
       }
@@ -135,7 +151,7 @@ var server = http.createServer(function (req, res) {
           }
           return teamsAndRecords.join('\n');
         }
-        var responseBody = parseTeamData(teams);
+        var responseBody = headerPartial + parseTeamData(teams) + footerPartial;
         res.writeHead({'Content-Type': 'text/html'});
         res.end(responseBody);
       }
